@@ -130,7 +130,7 @@ class Form(forms.BaseForm):
         language_codes = [code for code, lang in settings['LANGUAGES']]
         settings['CMS_LANGUAGES'] = {
             'default': {
-                'fallbacks': [fbcode for fbcode in language_codes],
+                'fallbacks': list(language_codes),
                 'redirect_on_fallback': True,
                 'public': True,
                 'hide_untranslated': False,
@@ -139,10 +139,13 @@ class Form(forms.BaseForm):
                 {
                     'code': code,
                     'name': settings['ALL_LANGUAGES_DICT'][code],
-                    'fallbacks': [fbcode for fbcode in language_codes if fbcode != code],
-                    'public': True
-                } for code in language_codes
-            ]
+                    'fallbacks': [
+                        fbcode for fbcode in language_codes if fbcode != code
+                    ],
+                    'public': True,
+                }
+                for code in language_codes
+            ],
         }
 
         settings['PARLER_LANGUAGES'] = {}
@@ -161,7 +164,7 @@ class Form(forms.BaseForm):
 
         for k, v in settings['CMS_LANGUAGES'].get('default', {}).items():
             if k in ['hide_untranslated', ]:
-                parler_defaults.update({k: v})
+                parler_defaults[k] = v
 
         settings['PARLER_LANGUAGES'].update({'default': parler_defaults})
 
@@ -195,12 +198,13 @@ class Form(forms.BaseForm):
         if settings['COMPRESS_ENABLED']:
             # Set far-future expiration headers for django-compressor
             # generated files.
-            settings.setdefault('STATIC_HEADERS', []).insert(0, (
-                r'{}/.*'.format(settings.get('COMPRESS_OUTPUT_DIR', 'CACHE')),
-                {
-                    'Cache-Control': 'public, max-age={}'.format(86400 * 365),
-                },
-            ))
+            settings.setdefault('STATIC_HEADERS', []).insert(
+                0,
+                (
+                    f"{settings.get('COMPRESS_OUTPUT_DIR', 'CACHE')}/.*",
+                    {'Cache-Control': f'public, max-age={86400 * 365}'},
+                ),
+            )
 
         # django-robots
         settings['INSTALLED_APPS'].append('robots')

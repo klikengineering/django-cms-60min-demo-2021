@@ -43,11 +43,4 @@ class VerticalSpacerPlugin(CMSPlugin):
         return self.space_xs or self.space_sm or self.space_md or self.space_lg or self.space_xl
 
     def __str__(self):
-        return "smart {}, xs {}, sm {}, md {}, lg {}, xl {}".format(
-            self.smart_space,
-            self.space_xs,
-            self.space_sm,
-            self.space_md,
-            self.space_lg,
-            self.space_xl,
-        )
+        return f"smart {self.smart_space}, xs {self.space_xs}, sm {self.space_sm}, md {self.space_md}, lg {self.space_lg}, xl {self.space_xl}"

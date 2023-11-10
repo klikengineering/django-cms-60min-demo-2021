@@ -16,9 +16,7 @@ class Form(forms.BaseForm):
         from simple_sso.compat import reverse_lazy
 
         def boolean_ish_or(value, or_values=()):
-            if value in or_values:
-                return value
-            return boolean_ish(value)
+            return value if value in or_values else boolean_ish(value)
 
         env = partial(djsenv, settings=settings)
 

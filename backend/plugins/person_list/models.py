@@ -9,9 +9,7 @@ class PersonListPluginModel(CMSPlugin):
     title = models.CharField(max_length=2048, blank=True)
 
     def __str__(self) -> str:
-        if self.title:
-            return self.title
-        return ''
+        return self.title if self.title else ''
 
 
 class Person(TranslatableModel):

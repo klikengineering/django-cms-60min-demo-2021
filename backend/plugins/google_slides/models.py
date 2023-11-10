@@ -19,10 +19,7 @@ class GoogleSlidesPluginModel(CMSPlugin):
     )
 
     def __str__(self) -> str:
-        if self.name:
-            return self.name
-        else:
-            return ''
+        return self.name if self.name else ''
 
     def get_link(self) -> str:
         return self.link.replace('/pub?', '/embed?')

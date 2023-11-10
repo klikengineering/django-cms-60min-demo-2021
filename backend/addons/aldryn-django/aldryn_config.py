@@ -30,7 +30,7 @@ class CachedLoader(list):
             self.overwrite_method(method)
 
     def overwrite_method(self, method):
-        uncached_method = 'uncached_{}'.format(method)
+        uncached_method = f'uncached_{method}'
         setattr(self, uncached_method, getattr(self, method))
         setattr(self, method, getattr(self._cached_loaders, method))
 
@@ -112,9 +112,9 @@ class Form(forms.BaseForm):
             settings['CACHE_URL'] = 'locmem://'
 
         if not settings['DATABASE_URL']:
-            settings['DATABASE_URL'] = 'sqlite:///{}'.format(
-                os.path.join(settings['DATA_ROOT'], 'db.sqlite3')
-            )
+            settings[
+                'DATABASE_URL'
+            ] = f"sqlite:///{os.path.join(settings['DATA_ROOT'], 'db.sqlite3')}"
             warnings.warn(
                 'no database configured. Falling back to DATABASE_URL={0}'.format(
                     settings['DATABASE_URL']
@@ -255,11 +255,7 @@ class Form(forms.BaseForm):
         settings['ALDRYN_SITES_DOMAINS'] = domains
         settings['ALDRYN_SITES_REDIRECT_PERMANENT'] = permanent_redirect
 
-        # This is ensured again by aldryn-sites, but we already do it here
-        # as we need the full list of domains later when configuring
-        # media/static serving, before aldryn-sites had a chance to run.
-        site_domains = domains.get(settings['SITE_ID'])
-        if site_domains:
+        if site_domains := domains.get(settings['SITE_ID']):
             settings['ALLOWED_HOSTS'].append(site_domains['domain'])
             settings['ALLOWED_HOSTS'].extend(site_domains['aliases'])
             settings['ALLOWED_HOSTS'].extend(site_domains['redirects'])
@@ -362,9 +358,7 @@ class Form(forms.BaseForm):
         }
 
     def sentry_settings(self, settings, env):
-        sentry_dsn = env('SENTRY_DSN')
-
-        if sentry_dsn:
+        if sentry_dsn := env('SENTRY_DSN'):
             from sentry_sdk import init
             from sentry_sdk.integrations.django import DjangoIntegration
 
@@ -412,7 +406,7 @@ class Form(forms.BaseForm):
         elif not settings['MEDIA_URL'].endswith('/'):
             # Django (or something else?) silently sets MEDIA_URL to an empty
             # string if it does not end with a '/'
-            settings['MEDIA_URL'] = '{}/'.format(settings['MEDIA_URL'])
+            settings['MEDIA_URL'] = f"{settings['MEDIA_URL']}/"
 
         # Handle media domain for built-in serving
         settings['MEDIA_URL_IS_ON_OTHER_DOMAIN'] = env('MEDIA_URL_IS_ON_OTHER_DOMAIN', None)
@@ -443,15 +437,15 @@ class Form(forms.BaseForm):
         use_manifest = data['use_manifeststaticfilesstorage']
 
         if use_gzip:
-            if use_manifest:
-                storage = 'aldryn_django.storage.ManifestGZippedStaticFilesStorage'
-            else:
-                storage = 'aldryn_django.storage.GZippedStaticFilesStorage'
+            storage = (
+                'aldryn_django.storage.ManifestGZippedStaticFilesStorage'
+                if use_manifest
+                else 'aldryn_django.storage.GZippedStaticFilesStorage'
+            )
+        elif use_manifest:
+            storage = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
         else:
-            if use_manifest:
-                storage = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
-            else:
-                storage = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+            storage = 'django.contrib.staticfiles.storage.StaticFilesStorage'
         settings['STATICFILES_STORAGE'] = storage
 
         settings['STATIC_URL'] = env('STATIC_URL', '/static/')
@@ -464,29 +458,30 @@ class Form(forms.BaseForm):
             os.path.join(settings['BASE_DIR'], 'static_collected'),
         )
         settings['STATIC_HEADERS'] = [
-            # Set far-future expiration headers for static files with hashed
-            # filenames. Also set cors headers to * for fonts.
-            (r'.*\.[0-9a-f]{10,16}\.(eot|ttf|otf|woff)', {
-                'Access-Control-Allow-Origin': '*',
-                'Cache-Control': 'public, max-age={}'.format(3600 * 24 * 365),
-            }),
-            (r'.*\.[0-9a-f]{10,16}\.[a-z]+', {
-                'Cache-Control': 'public, max-age={}'.format(3600 * 24 * 365),
-            }),
-            # Set default expiration headers for all remaining static files.
-            # *Has to be last* as processing stops at the first matching
-            # pattern it finds. Also set cors headers to * for fonts.
-            (r'.*\.(eot|ttf|otf|woff)', {
-                'Access-Control-Allow-Origin': '*',
-                'Cache-Control': 'public, max-age={}'.format(
-                    settings['STATICFILES_DEFAULT_MAX_AGE'],
-                ),
-            }),
-            ('.*', {
-                'Cache-Control': 'public, max-age={}'.format(
-                    settings['STATICFILES_DEFAULT_MAX_AGE'],
-                ),
-            }),
+            (
+                r'.*\.[0-9a-f]{10,16}\.(eot|ttf|otf|woff)',
+                {
+                    'Access-Control-Allow-Origin': '*',
+                    'Cache-Control': f'public, max-age={3600 * 24 * 365}',
+                },
+            ),
+            (
+                r'.*\.[0-9a-f]{10,16}\.[a-z]+',
+                {'Cache-Control': f'public, max-age={3600 * 24 * 365}'},
+            ),
+            (
+                r'.*\.(eot|ttf|otf|woff)',
+                {
+                    'Access-Control-Allow-Origin': '*',
+                    'Cache-Control': f"public, max-age={settings['STATICFILES_DEFAULT_MAX_AGE']}",
+                },
+            ),
+            (
+                '.*',
+                {
+                    'Cache-Control': f"public, max-age={settings['STATICFILES_DEFAULT_MAX_AGE']}"
+                },
+            ),
         ]
         settings['STATICFILES_DIRS'] = env(
             'STATICFILES_DIRS',
@@ -496,17 +491,14 @@ class Form(forms.BaseForm):
     def email_settings(self, data, settings, env):
         import dj_email_url
 
-        email_url = env('EMAIL_URL', '')
-        if email_url:
+        if email_url := env('EMAIL_URL', ''):
             settings['EMAIL_URL'] = email_url
             settings.update(dj_email_url.parse(email_url))
 
-        from_email = env('DEFAULT_FROM_EMAIL', '')
-        if from_email:
+        if from_email := env('DEFAULT_FROM_EMAIL', ''):
             settings['DEFAULT_FROM_EMAIL'] = from_email
 
-        server_email = env('SERVER_EMAIL', '')
-        if server_email:
+        if server_email := env('SERVER_EMAIL', ''):
             settings['SERVER_EMAIL'] = server_email
 
     def i18n_settings(self, data, settings, env):
