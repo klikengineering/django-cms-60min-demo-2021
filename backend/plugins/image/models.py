@@ -68,17 +68,16 @@ class ImagePluginModel(CMSPlugin, LinkAllMixin):
         self.thumbnail_config = oldinstance.thumbnail_config
 
     def get_image_url(self) -> str:
-        if self.thumbnail_config:
-            thumbnail_options = {
-                'size': (self.thumbnail_config.width, self.thumbnail_config.height),
-                'crop': self.thumbnail_config.crop,
-                'upscale': self.thumbnail_config.upscale,
-                'subject_location': self.image.subject_location,
-            }
-            thumbnailer = get_thumbnailer(self.image)
-            return thumbnailer.get_thumbnail(thumbnail_options).url
-        else:
+        if not self.thumbnail_config:
             return self.image.url
+        thumbnail_options = {
+            'size': (self.thumbnail_config.width, self.thumbnail_config.height),
+            'crop': self.thumbnail_config.crop,
+            'upscale': self.thumbnail_config.upscale,
+            'subject_location': self.image.subject_location,
+        }
+        thumbnailer = get_thumbnailer(self.image)
+        return thumbnailer.get_thumbnail(thumbnail_options).url
 
     def get_image_source_url(self) -> str:
         return self.image.url
@@ -99,6 +98,4 @@ class ImagePluginModel(CMSPlugin, LinkAllMixin):
         return self.thumbnail_config.width if self.thumbnail_config else self.image.width
 
     def __str__(self) -> str:
-        if self.image and self.image.label:
-            return self.image.label
-        return ''
+        return self.image.label if self.image and self.image.label else ''

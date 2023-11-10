@@ -53,6 +53,4 @@ class SectionWithImageBackgroundPluginModel(CMSPlugin):
         return f'2560x{self.height}'
 
     def __str__(self):
-        if self.name:
-            return self.name
-        return ''
+        return self.name if self.name else ''

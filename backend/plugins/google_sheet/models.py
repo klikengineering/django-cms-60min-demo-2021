@@ -20,10 +20,7 @@ class GoogleSheetPluginModel(CMSPlugin):
     is_show_headers = models.BooleanField(default=False, verbose_name="Show table headers")
 
     def __str__(self) -> str:
-        if self.name:
-            return self.name
-        else:
-            return ''
+        return self.name if self.name else ''
 
     def get_link(self) -> str:
         return f'{self.link}?widget=true&amp;headers={str(self.is_show_headers).lower()}'
